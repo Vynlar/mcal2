@@ -1,9 +1,11 @@
 (ns development
-(:require
-  [clojure.tools.namespace.repl :as tools-ns :refer [set-refresh-dirs]]
-  [mount.core :as mount]
-  ;; this is the top-level dependent component...mount will find the rest via ns requires
-  [app.server-components.http-server :refer [http-server]]))
+  (:require
+   [clojure.tools.namespace.repl :as tools-ns :refer [set-refresh-dirs]]
+   [app.model.session :refer [insert-account!]]
+   [app.model.mock-database :refer [reset-db conn]]
+   [mount.core :as mount]
+   ;; this is the top-level dependent component...mount will find the rest via ns requires
+   [app.server-components.http-server :refer [http-server]]))
 
 (defn start
   "Start the web server"
@@ -25,6 +27,14 @@
   (stop)
   (tools-ns/refresh :after 'development/start))
 
+(defn reset-and-seed []
+  (reset-db)
+  (restart)
+  (insert-account! conn {:account/id (java.util.UUID/randomUUID)
+                         :account/email "adrian@example.com"
+                         :account/password "password"}))
+
 (comment
   (start)
+  (reset-and-seed)
   (restart))
