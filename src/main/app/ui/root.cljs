@@ -2,7 +2,7 @@
   (:require
    [app.model.session :as session]
    [clojure.string :as str]
-   [com.fulcrologic.fulcro.dom :as dom :refer [div ul li p h3 button b]]
+   [com.fulcrologic.fulcro.dom :as dom :refer [div ul li p h3 button a]]
    [com.fulcrologic.fulcro.dom.html-entities :as ent]
    [com.fulcrologic.fulcro.dom.events :as evt]
    [com.fulcrologic.fulcro.application :as app]
@@ -150,19 +150,11 @@
                "but mostly this is just a blank slate waiting "
                "for your project."))))
 
-(defsc Settings [this {:keys [:account/time-zone :account/real-name] :as props}]
-  {:query         [:account/time-zone :account/real-name :account/crap]
-   :ident         (fn [] [:component/id :settings])
-   :route-segment ["settings"]
-   :initial-state {}}
-  (div :.ui.container.segment
-       (h3 "Settings")
-       (div "TODO")))
-
-(defsc ClassListItem [this {:class/keys [name]}]
+(defsc ClassListItem [this {:class/keys [id name]}]
   {:query [:class/id :class/name]
    :ident :class/id}
-  (div "Item: " name))
+  (div "Item: " name
+       (a {:href "#" :onClick #(dr/change-route! this ["schedule" id])} "Schedule")))
 
 (def ui-class-list-item (comp/factory ClassListItem {:keyfn :class/id}))
 
@@ -171,7 +163,6 @@
    :ident (fn [] [:component/id :my-classes])
    :route-segment ["my-classes"]
    :will-enter (fn [this params]
-                 (js/console.log "WOW")
                  (dr/route-deferred [:component/id :my-classes]
                                     (fn []
                                       (df/load! this ::class/my-classes ClassListItem
@@ -182,8 +173,45 @@
   (div "My Classes"
        (map ui-class-list-item classes)))
 
+(defn route-id->id [type id]
+  (case type
+    :uuid (uuid id)))
+
+(defsc Slot [this {:slot/keys [start end] :as props}]
+  {:query [:slot/start :slot/end]
+   :ident :slot/start}
+  (div "Slot from " (str start) " to " (str end)
+       (button {:onClick #(comp/transact! this [(class/register {:class/id (comp/get-computed this :class/id)
+                                                                 :slot/start start})])}
+               "Register")))
+
+(def ui-slot (comp/computed-factory Slot {:keyfn :slot/start}))
+
+(defsc ClassSchedule [this {:class/keys [id name slots]}]
+  {:query [:class/id :class/name :class/slots]
+   :ident :class/id}
+  (div "Schedule for " name
+       (map (fn [slot] (ui-slot slot {:class/id id})) slots)))
+
+(def ui-class-schedule (comp/factory ClassSchedule {:keyfn :class/id}))
+
+(defsc ScheduleClass [this props]
+  {:query [{:class/class (comp/get-query ClassSchedule)}]
+   :ident (fn [] [:component/id :schedule])
+   :route-segment ["schedule" :class-id]
+   :will-enter (fn [this {route-id :class-id}]
+                 (let [id (route-id->id :uuid route-id)]
+                   (dr/route-deferred [:component/id :schedule]
+                                      (fn []
+                                        (df/load! this [:class/id id] ClassSchedule
+                                                  {:target (targeting/replace-at [:component/id :schedule :class/class])
+                                                   :post-mutation `dr/target-ready
+                                                   :post-mutation-params {:target [:component/id :schedule]}})))))}
+  (div "Schedule"
+       (ui-class-schedule (:class/class props))))
+
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main Signup SignupSuccess Settings MyClassesPage]})
+  {:router-targets [Main Signup SignupSuccess MyClassesPage ScheduleClass]})
 
 (def ui-top-router (comp/factory TopRouter))
 

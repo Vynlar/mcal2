@@ -15,6 +15,12 @@
                              :db/unique      :db.unique/identity}
              :account/classes {:db/cardinality :db.cardinality/many
                                :db/type :db.type/ref}
+             :registration/id {:db/cardinality :db.cardinality/one
+                               :db/unique      :db.unique/identity}
+             :registration/account {:db/cardinality :db.cardinality/one
+                                    :db/type :db.type/ref}
+             :registration/class {:db/cardinality :db.cardinality/one
+                                  :db/type :db.type/ref}
              :class/id {:db/cardinality :db.cardinality/one
                         :db/unique      :db.unique/identity}})
 

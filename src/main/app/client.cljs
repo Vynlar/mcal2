@@ -1,7 +1,6 @@
 (ns app.client
   (:require
    [app.application :refer [SPA]]
-   [app.ui.root :as root]
    [com.fulcrologic.fulcro.application :as app]
    [app.ui.root :as root]
    [com.fulcrologic.fulcro.networking.http-remote :as net]
@@ -43,13 +42,9 @@
 
   (reset! (::app/state-atom SPA) {})
 
-  (comp/get-query root/Settings (app/current-state SPA))
-
   (tap> SPA)
   (com.fulcrologic.fulcro.algorithms.indexing/reindex)
 
-  (merge/merge-component! SPA root/Settings {:account/time-zone "America/Los_Angeles"
-                                             :account/real-name "Joe Schmoe"})
   (dr/initialize! SPA)
   (app/current-state SPA)
   (dr/change-route SPA ["settings"])
