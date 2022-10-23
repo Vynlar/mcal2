@@ -166,7 +166,7 @@
                  (dr/route-deferred [:component/id :my-classes]
                                     (fn []
                                       (df/load! this ::class/my-classes ClassListItem
-                                                {:target (targeting/replace-at [:component/id :my-classes :component/classes])
+                                                {:target [:component/id :my-classes :component/classes]
                                                  :post-mutation `dr/target-ready
                                                  :post-mutation-params {:target [:component/id :my-classes]}}))))}
 
@@ -176,6 +176,15 @@
 (defn route-id->id [type id]
   (case type
     :uuid (uuid id)))
+
+(defsc RegistrationDetails [this {:registration/keys [id]}]
+  {:query [:registration/id :registration/success?]
+   :ident :registration/id
+   :will-enter (fn [app {str-id :reg-id :as params}]
+                 (let [id (route-id->id :uuid str-id)]
+                   (dr/route-immediate [:registration/id id])))
+   :route-segment ["registration" :reg-id]}
+  (div "registration" (str id)))
 
 (defsc Slot [this {:slot/keys [start end] :as props}]
   {:query [:slot/start :slot/end]
@@ -211,7 +220,7 @@
        (ui-class-schedule (:class/class props))))
 
 (dr/defrouter TopRouter [this props]
-  {:router-targets [Main Signup SignupSuccess MyClassesPage ScheduleClass]})
+  {:router-targets [Main Signup SignupSuccess MyClassesPage ScheduleClass RegistrationDetails]})
 
 (def ui-top-router (comp/factory TopRouter))
 
@@ -241,8 +250,6 @@
          (div :.ui.secondary.pointing.menu
               (dom/a :.item {:classes [(when (= :main current-tab) "active")]
                              :onClick (fn [] (dr/change-route this ["main"]))} "Main")
-              (dom/a :.item {:classes [(when (= :settings current-tab) "active")]
-                             :onClick (fn [] (dr/change-route this ["settings"]))} "Settings")
               (dom/a :.item {:classes [(when (= :my-classes current-tab) "active")]
                              :onClick (fn [] (dr/change-route this ["my-classes"]))} "My Classes")
               (div :.right.menu

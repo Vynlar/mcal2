@@ -27,10 +27,12 @@
   (stop)
   (tools-ns/refresh :after 'development/start))
 
+(defonce mock-uuid (java.util.UUID/randomUUID))
+
 (defn reset-and-seed []
   (reset-db)
   (restart)
-  (insert-account! conn {:account/id (java.util.UUID/randomUUID)
+  (insert-account! conn {:account/id mock-uuid
                          :account/email "adrian@example.com"
                          :account/password "password"}))
 

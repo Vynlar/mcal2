@@ -94,17 +94,17 @@
         classes
         (:account/classes (d/pull db [{:account/classes [:class/id]}]
                                   [:account/id id]))]
-    {::my-classes classes}))
+    {::my-classes (or classes [])}))
 
 (defmutation register [{:keys [connection] :as env} {class-id :class/id :slot/keys [start]}]
-  {::pc/output [:registration/id]}
+  {::pc/output [:registration/id :registration/success?]}
   (let [id (java.util.UUID/randomUUID)
         {account-id :account/id} (get-in env [:ring/request :session])]
     (d/transact! connection [{:registration/id id
                               :registration/class [:class/id class-id]
                               :registration/account [:account/id account-id]
                               :registration/start start}])
-    {:registration/id id}))
+    {:registration/id id :registration/success? true}))
 
 (def resolvers [class-resolver classes-by-account-resolver my-classes-resolver slots-from-class-resolver register])
 
@@ -116,4 +116,4 @@
 
   (insert-class! db/conn
                  adrian
-                 {:class/name "My Class"}))
+                 {:class/name "My Class 2"}))
